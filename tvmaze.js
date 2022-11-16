@@ -3,9 +3,10 @@
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
+const $episodesList = $("#episodesList")
 
-const DEFAULT_IMAGE = "https://tinyurl.com/tv-missing";
 const BASE_URL = 'http://api.tvmaze.com';
+const DEFAULT_IMAGE = "https://tinyurl.com/tv-missing";
 
 /** Given a search term, search for tv shows that match that query.
  *
@@ -15,8 +16,8 @@ const BASE_URL = 'http://api.tvmaze.com';
  */
 
 async function getShowsByTerm(searchTerm) {
-  const searchEndpointUrl = `${BASE_URL}/search/shows?q=${searchTerm}`;
-  const response = await axios.get(searchEndpointUrl);
+  const searchEndpointUrl = `${BASE_URL}/search/shows`;
+  const response = await axios.get(searchEndpointUrl, {params: {q: searchTerm}});
 
   const shows = response.data.map(function(obj) {
     return {
@@ -25,7 +26,7 @@ async function getShowsByTerm(searchTerm) {
       summary: obj.show.summary,
       image: obj.show.image.original || DEFAULT_IMAGE
     };
-  })
+  });
 
   return shows;
 }
@@ -81,8 +82,43 @@ $searchForm.on("submit", async function (evt) {
  *      { id, name, season, number }
  */
 
-// async function getEpisodesOfShow(id) { }
+async function getEpisodesOfShow(id) {
+  const episodesEndpointUrl = `${BASE_URL}/shows/${id}/episodes`;
+  const response = await axios.get(episodesEndpointUrl);
 
-/** Write a clear docstring for this function... */
+  const episodes = response.data.map(function(obj) {
+    return {
+      id: obj.id,
+      name: obj.name,
+      season: obj.season,
+      number: obj.number
+    };
+  });
 
-// function populateEpisodes(episodes) { }
+  return episodes;
+}
+
+/** Given an array of episodes create <li> elements for each episode and populate
+ * into the #episodesList part of the DOM
+ */
+
+function populateEpisodes(episodes) {
+  $episodesList.empty();
+
+  for (let episode of episodes) {
+    const $newEpisode = $('<li>', {text: `${episode.name} (Season ${episode.season}, Episode ${episode.number})`});
+    $episodesList.append($newEpisode);
+  }
+
+  $episodesArea.show();
+}
+
+/** Click handler for episodes buttons. Upon click shows episodes for the given show */
+
+async function getAndPopulateEpisodes(evt) {
+  const showId = $(evt.target).parent().parent().parent().attr('data-show-id');
+  const episodes = await getEpisodesOfShow(showId);
+  populateEpisodes(episodes);
+}
+
+$('#showsList').on('click', 'button', getAndPopulateEpisodes);
