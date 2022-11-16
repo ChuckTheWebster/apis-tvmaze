@@ -4,6 +4,7 @@ const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 
+const BASE_URL = 'http://api.tvmaze.com';
 
 /** Given a search term, search for tv shows that match that query.
  *
@@ -12,27 +13,20 @@ const $searchForm = $("#searchForm");
  *    (if no image URL given by API, put in a default image URL)
  */
 
-async function getShowsByTerm( /* term */) {
-  // ADD: Remove placeholder & make request to TVMaze search shows API.
+async function getShowsByTerm(searchTerm) {
+  const searchEndpointUrl = `${BASE_URL}/search/shows?q=${searchTerm}`;
+  const response = await axios.get(searchEndpointUrl);
 
-  return [
-    {
-      id: 1767,
-      name: "The Bletchley Circle",
-      summary:
-        `<p><b>The Bletchley Circle</b> follows the journey of four ordinary 
-           women with extraordinary skills that helped to end World War II.</p>
-         <p>Set in 1952, Susan, Millie, Lucy and Jean have returned to their 
-           normal lives, modestly setting aside the part they played in 
-           producing crucial intelligence, which helped the Allies to victory 
-           and shortened the war. When Susan discovers a hidden code behind an
-           unsolved murder she is met by skepticism from the police. She 
-           quickly realises she can only begin to crack the murders and bring
-           the culprit to justice with her former friends.</p>`,
-      image:
-          "http://static.tvmaze.com/uploads/images/medium_portrait/147/369403.jpg"
-    }
-  ]
+  const shows = response.data.map(function(obj) {
+    return {
+      id: obj.show.id,
+      name: obj.show.name,
+      summary: obj.show.summary,
+      image: obj.show.image.original
+    };
+  })
+
+  return shows;
 }
 
 
@@ -45,9 +39,9 @@ function populateShows(shows) {
     const $show = $(
         `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
-           <img 
-              src="http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpg" 
-              alt="Bletchly Circle San Francisco" 
+           <img
+              src="http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpg"
+              alt="Bletchly Circle San Francisco"
               class="w-25 me-3">
            <div class="media-body">
              <h5 class="text-primary">${show.name}</h5>
@@ -56,7 +50,7 @@ function populateShows(shows) {
                Episodes
              </button>
            </div>
-         </div>  
+         </div>
        </div>
       `);
 
